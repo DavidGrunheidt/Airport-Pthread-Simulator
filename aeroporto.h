@@ -7,6 +7,22 @@
 
 typedef size_t tempo_t;
 
+aeroporto_t* iniciar_aeroporto (size_t* args);
+void aproximacao_aeroporto (aeroporto_t* aeroporto, aviao_t* aviao);
+void pousar_aviao (aeroporto_t* aeroporto, aviao_t* aviao);
+void acoplar_portao (aeroporto_t* aeroporto, aviao_t* aviao);
+void transportar_bagagens (aeroporto_t* aeroporto, aviao_t* aviao);
+void adicionar_bagagens_esteira (aeroporto_t* aeroporto, aviao_t* aviao);
+void decolar_aviao (aeroporto_t* aeroporto, aviao_t* aviao);
+int finalizar_aeroporto (aeroporto_t* aeroporto);
+
+void *aproxAeroFunc(void *arg);
+void *pousAviaoFunc(void *arg);
+void *acopPortFunc(void *arg);
+void *transpBagFunc(void *arg);
+void *addBagEstFunc(void *arg);
+void *decAviaoFunc(void *arg);
+
 typedef struct {
 	size_t n_pistas;
 	size_t n_portoes;
@@ -16,22 +32,17 @@ typedef struct {
 	tempo_t t_remover_bagagens;
 	tempo_t t_inserir_bagagens;
 	tempo_t t_bagagens_esteira;
-
 	// Ponteiros para varias pistas e portoes
 	// Cada pista e portao só pode ter um aviao associado
 	pthread_mutex_t *pistas, *portoes;
-
 	// Ponteiros para varias esteiras
 	// Cada esteira pode ser associado com "nMax" avioes
 	sem_t *esteiras;
+	// Ponteiro p/ fila dos avioes esperando permis. p/ pouso.
+	fila_ordenada_t *filaPouso;
 } aeroporto_t;
 
-
-/**
- * Esta função deve fazer a alocação dinâmica de um aeroporto (malloc)
- * e atribuir os parâmetros (recebidos por um array de unsigned ints)
- * aos atributos da struct aeroporto
- **/
+// Alocação dinamica do aeroporto e atribuição de parametros
 aeroporto_t* iniciar_aeroporto (size_t* args);
 
 /**

@@ -6,25 +6,25 @@
  * Descrições em fila.h
  **/
 
- elemento_t * aloca_elemento (aviao_t * dado) {
-    elemento_t *elemento = (elemento_t *) malloc(sizeof (elemento_t));
-    return elemento;
- }
+elemento_t * aloca_elemento (aviao_t * dado) {
+	elemento_t *elemento = (elemento_t *) malloc(sizeof (elemento_t));
+	return elemento;
+}
 
- void desaloca_elemento (elemento_t * elemento) {
- 	free(elemento->dado);
- 	free(elemento);
- }
+void desaloca_elemento (elemento_t * elemento) {
+	free(elemento->dado);
+	free(elemento);
+}
 
 fila_ordenada_t * criar_fila () {
-    fila_ordenada_t *fila = (fila_ordenada_t *) malloc(sizeof(fila_ordenada_t));
+	fila_ordenada_t *fila = (fila_ordenada_t *) malloc(sizeof(fila_ordenada_t));
 
-    fila->primeiro = NULL;
-    fila->ultimo = NULL;
+	fila->primeiro = NULL;
+	fila->ultimo = NULL;
 
-    fila->n_elementos = 0;
+	fila->n_elementos = 0;
 
-    return fila;
+	return fila;
 }
 
 void desaloca_fila (fila_ordenada_t * fila) {

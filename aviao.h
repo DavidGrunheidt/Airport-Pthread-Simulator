@@ -2,21 +2,17 @@
 #define AVIAO_H
 
 #include <pthread.h>
-#include <unistd.h>
 #include <stdlib.h>
 
-/**
- * O id deve ser usado pra indentificar individualmente cada avião e
- * sua a situação do avião no programa.
- **/
+
 typedef struct {
   pthread_t thread; // Uso dos recursos pelo avião é monitorado pela thread
   size_t combustivel; // Indica prioridade do avião para pousar
-  size_t id; // Identificador do avião: 0, 1, 2, ...
+  size_t id; // Identificador do avião
 } aviao_t;
 
-// Estas funcoes devem cuidar da alocacao dinâmica de memória
-aviao_t * criar_aviao (size_t id);
+// Alocação e desalocação dinamica na memoria.
+aviao_t * criar_aviao (pthread_t thread, size_t id, size_t combustivel);
 void desaloca_aviao (aviao_t* aviao);
 
 #endif
