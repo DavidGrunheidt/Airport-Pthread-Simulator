@@ -7,15 +7,6 @@
 
 typedef size_t tempo_t;
 
-aeroporto_t* iniciar_aeroporto (size_t* args);
-void aproximacao_aeroporto (aeroporto_t* aeroporto, aviao_t* aviao);
-void pousar_aviao (aeroporto_t* aeroporto, aviao_t* aviao);
-void acoplar_portao (aeroporto_t* aeroporto, aviao_t* aviao);
-void transportar_bagagens (aeroporto_t* aeroporto, aviao_t* aviao);
-void adicionar_bagagens_esteira (aeroporto_t* aeroporto, aviao_t* aviao);
-void decolar_aviao (aeroporto_t* aeroporto, aviao_t* aviao);
-int finalizar_aeroporto (aeroporto_t* aeroporto);
-
 void *aproxAeroFunc(void *arg);
 void *pousAviaoFunc(void *arg);
 void *acopPortFunc(void *arg);
@@ -41,6 +32,15 @@ typedef struct {
 	// Ponteiro p/ fila dos avioes esperando permis. p/ pouso.
 	fila_ordenada_t *filaPouso;
 } aeroporto_t;
+
+aeroporto_t* iniciar_aeroporto (size_t* args);
+void aproximacao_aeroporto (aeroporto_t* aeroporto, aviao_t* aviao);
+void pousar_aviao (aeroporto_t* aeroporto, aviao_t* aviao);
+void acoplar_portao (aeroporto_t* aeroporto, aviao_t* aviao);
+void transportar_bagagens (aeroporto_t* aeroporto, aviao_t* aviao);
+void adicionar_bagagens_esteira (aeroporto_t* aeroporto, aviao_t* aviao);
+void decolar_aviao (aeroporto_t* aeroporto, aviao_t* aviao);
+int finalizar_aeroporto (aeroporto_t* aeroporto);
 
 // Alocação dinamica do aeroporto e atribuição de parametros
 aeroporto_t* iniciar_aeroporto (size_t* args);
