@@ -98,8 +98,6 @@ int main (int argc, char** argv) {
             aviao_t *aviao;
             criaAviao(aviao, contAvioes);
             contAvioes++;
-
-            
         }
 
 
