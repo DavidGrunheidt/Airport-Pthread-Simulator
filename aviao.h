@@ -12,7 +12,7 @@ typedef struct {
 } aviao_t;
 
 // Alocação e desalocação dinamica na memoria.
-aviao_t * criar_aviao (pthread_t thread, size_t id, size_t combustivel);
+aviao_t * criar_aviao (size_t id, size_t combustivel);
 void desaloca_aviao (aviao_t* aviao);
 
 #endif

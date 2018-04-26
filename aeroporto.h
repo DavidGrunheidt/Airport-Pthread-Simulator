@@ -7,13 +7,6 @@
 
 typedef size_t tempo_t;
 
-void *aproxAeroFunc(void *arg);
-void *pousAviaoFunc(void *arg);
-void *acopPortFunc(void *arg);
-void *transpBagFunc(void *arg);
-void *addBagEstFunc(void *arg);
-void *decAviaoFunc(void *arg);
-
 typedef struct {
 	size_t n_pistas;
 	size_t n_portoes;
@@ -29,7 +22,8 @@ typedef struct {
 	// Ponteiros para varias esteiras
 	// Cada esteira pode ser associado com "nMax" avioes
 	sem_t *esteiras;
-	// Ponteiro p/ fila dos avioes esperando permis. p/ pouso.
+	// Fila para pouso e mutex para tirar a concorrencia
+	pthread_mutex_t entraFila, saiFila;
 	fila_ordenada_t *filaPouso;
 } aeroporto_t;
 

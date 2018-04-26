@@ -2,19 +2,26 @@
 #include <unistd.h>
 
 #include "aeroporto.h"
+#include "fila.h"
 
 #define NOVO_AVIAO_MIN 30
 #define NOVO_AVIAO_MAX 120
-#define COMBUSTIVEL_MIN 7
-#define COMBUSTIVEL_MAX 100
+#define COMBUSTIVEL_MIN 5
+#define COMBUSTIVEL_MAX 80
 #define TEMPO_POUSO_DECOLAGEM 40
 #define TEMPO_REMOVER_BAGAGENS 90
 #define TEMPO_INSERIR_BAGAGENS 110
 #define TEMPO_BAGAGENS_ESTEIRA 200
 #define TEMPO_SIMULACAO 10000 // 10 segundos
 
+
 void criaAviao(aviao_t *aviao, size_t contAvioes);
 void *simularAviao(void *arg);
+
+typedef struct {
+    aeroporto_t *aeroporto;
+    aviao_t *aviao;
+} arg_t;
 
 int main (int argc, char** argv) {
 
@@ -95,25 +102,41 @@ int main (int argc, char** argv) {
 
         size_t contAvioes = 0;
         while (contAvioes < 10) {
-            aviao_t *aviao;
-            criaAviao(aviao, contAvioes);
-            contAvioes++;
-        }
+            unsigned int seed = time(NULL);
 
+            // Define uma porcentagem de combustivel de 5 a 80%
+            size_t combustivel = ((size_t) COMBUSTIVEL_MIN) + rand_r(&seed) % ((size_t) COMBUSTIVEL_MAX - COMBUSTIVEL_MIN);
+
+            // Aloca memoria dinamica na heap para struct aviao
+            aviao_t *aviao = criar_aviao(contAvioes, combustivel);
+
+            arg_t *argAux = (arg_t *) malloc(sizeof(arg_t));
+            argAux->aeroporto = meu_aeroporto;
+            argAux->aviao = aviao;
+
+            // Cria a thread que representa o aviao
+            pthread_create(&aviao->thread, NULL, simularAviao,(void *) argAux);
+
+            contAvioes++;
+
+            unsigned int seed = time(NULL);
+            int wait = ((int) NOVO_AVIAO_MIN) + rand_r(&seed) % ((int) NOVO_AVIAO_MAX - NOVO_AVIAO_MIN); 
+            // Esperar um tempo de NOVO_AVIAO_MIN até NOVO_AVIAO_MAX para
+            // criar outro aviao (thread);
+            usleep(wait * 1000);
+        }
 
         finalizar_aeroporto(meu_aeroporto);
         return 1;
     }
 
-void criaAviao(aviao_t *aviao, size_t id) {
-    unsigned int seed = time(NULL);
+    void *simularAviao(void *arg) {
+        aeroporto_t meu_aeroporto = ((aeroporto_t *)arg); // mutex aqui..
 
-    pthread_t thread;
-    size_t combustivel = ((size_t) COMBUSTIVEL_MIN) + rand_r(&seed) % ((size_t) COMBUSTIVEL_MAX - COMBUSTIVEL_MIN);
-    
-    aviao = criar_aviao(thread, id, combustivel);
-    
-    int wait = ((int) NOVO_AVIAO_MIN) + rand_r(&seed) % ((int) NOVO_AVIAO_MAX - NOVO_AVIAO_MIN); 
-    usleep(wait * 1000);
+    }
+
+    void criaAviao(aviao_t *aviao) {
+    }
+
 }
 

@@ -6,10 +6,9 @@
  * Descrições em aviao.h
  **/
 
-aviao_t * criar_aviao(pthread_t thread, size_t id, size_t combustivel) {
+aviao_t * criar_aviao(size_t id, size_t combustivel) {
 	aviao_t *aviao = (aviao_t *) malloc(sizeof (aviao_t));
 
-	aviao->thread = thread;
 	aviao->combustivel = combustivel;
 	aviao->id = id;
 

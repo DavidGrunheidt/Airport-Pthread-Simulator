@@ -33,7 +33,11 @@ aeroporto_t* iniciar_aeroporto (size_t* args) {
 	for (int i = 0; i < nesteiras; i++)
 		sem_init((aeroporto->esteiras + i), 0, n_max_avioes_esteira);
 
+	pthread_mutex_init(&aeroporto->entraFila, NULL);
+	pthread_mutex_init(&aeroporto->saiFila, NULL);
+
 	aeroporto->filaPouso = (fila_ordenada_t *) criar_fila();
+
 	return aeroporto;	
 }
 
