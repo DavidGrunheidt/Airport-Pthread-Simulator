@@ -18,6 +18,7 @@ typedef struct {
 	elemento_t * primeiro;
 	elemento_t * ultimo;
 	size_t n_elementos;
+	pthread_mutex_t entraFila, saiFila;
 } fila_ordenada_t;
 
 // Alocacão dinâmica da fila ordenada de aviões
@@ -29,7 +30,9 @@ void desaloca_fila (fila_ordenada_t * fila);
 // Insere dados de forma ordenada na fila
 void inserir (fila_ordenada_t * fila, aviao_t * dado);
 
-// Remove o primeiro da fila.
-aviao_t * remover (fila_ordenada_t * fila);
+// Remove o indeximo elemento da fila (considere o 1º index = 1)
+aviao_t * remover (fila_ordenada_t * fila, aviao_t *aviao);
 
+// Retorna o index que o aviao esta
+size_t at (fila_ordenada_t * fila, aviao_t *aviao);
 #endif

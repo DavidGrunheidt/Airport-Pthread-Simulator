@@ -24,7 +24,7 @@ aeroporto_t* iniciar_aeroporto (size_t* args) {
 	aeroporto->portoes = (pthread_mutex_t *) malloc(nportoes * sizeof(pthread_mutex_t));
 	aeroporto->esteiras = (sem_t *) malloc(nesteiras * sizeof(sem_t));
 
-	for (int i = 0 ; i < npistas; i++)
+	for (int i = 0 ; i < npistas; i++) 
 		pthread_mutex_init((aeroporto->pistas + i), NULL);
 
 	for (int i = 0; i < nportoes; i++)
@@ -33,8 +33,7 @@ aeroporto_t* iniciar_aeroporto (size_t* args) {
 	for (int i = 0; i < nesteiras; i++)
 		sem_init((aeroporto->esteiras + i), 0, n_max_avioes_esteira);
 
-	pthread_mutex_init(&aeroporto->entraFila, NULL);
-	pthread_mutex_init(&aeroporto->saiFila, NULL);
+	sem_init(&aeroporto->SemPousar, 0, npistas);
 
 	aeroporto->filaPouso = (fila_ordenada_t *) criar_fila();
 

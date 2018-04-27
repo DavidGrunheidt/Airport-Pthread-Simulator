@@ -14,8 +14,6 @@
 #define TEMPO_BAGAGENS_ESTEIRA 200
 #define TEMPO_SIMULACAO 10000 // 10 segundos
 
-
-void criaAviao(aviao_t *aviao, size_t contAvioes);
 void *simularAviao(void *arg);
 
 typedef struct {
@@ -110,6 +108,9 @@ int main (int argc, char** argv) {
             // Aloca memoria dinamica na heap para struct aviao
             aviao_t *aviao = criar_aviao(contAvioes, combustivel);
 
+            // Aloca dinamicamente os argumentos da função, de modo que 
+            // eles não sejam destruidos no final do laço
+            // thread é responsavel por desalocar (free)
             arg_t *argAux = (arg_t *) malloc(sizeof(arg_t));
             argAux->aeroporto = meu_aeroporto;
             argAux->aviao = aviao;
@@ -119,7 +120,6 @@ int main (int argc, char** argv) {
 
             contAvioes++;
 
-            unsigned int seed = time(NULL);
             int wait = ((int) NOVO_AVIAO_MIN) + rand_r(&seed) % ((int) NOVO_AVIAO_MAX - NOVO_AVIAO_MIN); 
             // Esperar um tempo de NOVO_AVIAO_MIN até NOVO_AVIAO_MAX para
             // criar outro aviao (thread);
@@ -129,14 +129,42 @@ int main (int argc, char** argv) {
         finalizar_aeroporto(meu_aeroporto);
         return 1;
     }
-
+    
+    // Ordem dos eventos do avião desde o pouso a decolagem é sequencial
     void *simularAviao(void *arg) {
-        aeroporto_t meu_aeroporto = ((aeroporto_t *)arg); // mutex aqui..
+        // args em forma de vetor para porder liberar memoria
+        arg_t *args = ((arg_t *)arg);
+        aeroporto_t *meu_aeroporto =  args->aeroporto;
+        aviao_t *aviao = args->aviao;
+        // Liberação de memoria de args
+        free(args);
+
+        // Fase de aproximação, logica toda na função no modulo avião
+        aproximacao_aeroporto(meu_aeroporto, aviao);
+
+        // Fase de pouso, parte da logica no main
+        // Verifica se liberou uma pista, se sim então verifica
+        // se o aviao esta em um dos lugares das filas com index
+        // menor ou igual ao numero de pistas, já que estes lugares
+        // que tem prioridade de pouso
+        size_t index;
+        while (1) {
+            // Aguarda uma pista das npistas livres
+            sem_wait(&meu_aeroporto->SemPousar);
+            // Liberou uma pista, então verifica se ele tem prioridade
+            index = at(meu_aeroporto->filaPouso, aviao);
+            // Se tiver prioridade, aguarda o tempo de pouso e sai do laço
+            // Caso contrario libera o semaforo mesmo assim
+            if (index <= meu_aeroporto->n_pistas) {
+                pousar_aviao(meu_aeroporto, aviao);
+                usleep((int) TEMPO_POUSO_DECOLAGEM);
+                break;
+            }
+            sem_post(&meu_aeroporto->SemPousar);
+        }
+
+
+
 
     }
-
-    void criaAviao(aviao_t *aviao) {
-    }
-
-}
 

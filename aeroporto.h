@@ -22,19 +22,15 @@ typedef struct {
 	// Ponteiros para varias esteiras
 	// Cada esteira pode ser associado com "nMax" avioes
 	sem_t *esteiras;
-	// Fila para pouso e mutex para tirar a concorrencia
-	pthread_mutex_t entraFila, saiFila;
+	// Fila para pouso e semaforo inicializado com a qnt de pistas
+	sem_t SemPousar;
 	fila_ordenada_t *filaPouso;
 } aeroporto_t;
 
 // Alocação dinamica do aeroporto e atribuição de parametros
 aeroporto_t* iniciar_aeroporto (size_t* args);
 
-/**
- * Esta função deve ser chamada quando um novo avião se aproxima
- * do aeroporto. Nesta situação um avião deve pousar em seguida,
- * mas somente se houver uma pista livre para ele.
- **/
+//Coloca o avião que requisitou aproximação na fila  (Ultima pos);
 void aproximacao_aeroporto (aeroporto_t* aeroporto, aviao_t* aviao);
 
 /**
@@ -43,6 +39,8 @@ void aproximacao_aeroporto (aeroporto_t* aeroporto, aviao_t* aviao);
  * deve se acoplar a um portão, caso haja um livre, se não houver, ele deve
  * esperar.
  **/
+
+// Trylock em todas as pistas ate achar uma disponivel
 void pousar_aviao (aeroporto_t* aeroporto, aviao_t* aviao);
 
 /**
