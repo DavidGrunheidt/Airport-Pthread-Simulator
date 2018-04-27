@@ -49,7 +49,7 @@ void inserir (fila_ordenada_t * fila, aviao_t * dado, size_t index) {
 	elemento_t *elemento = aloca_elemento(dado);
 	if (index <= fila->n_elementos) {
 		if (index == 1) {
-			inserirPrimeiro(fila, aviao);
+			inserirPrimeiro(fila, elemento);
 		} else {
 			elemento_t *elementoAux = fila->primeiro;
 			for (int i = 1; i < index; i++)
@@ -63,9 +63,7 @@ void inserir (fila_ordenada_t * fila, aviao_t * dado, size_t index) {
 	}
 }
 
-}
-
-void inserirPrimeiro(fila_ordenada_t *fila, aviao_t *dado) {
+void inserirPrimeiro(fila_ordenada_t *fila, elemento_t *elemento) {
 	elemento->anterior = NULL;
 	elemento->proximo = fila->primeiro;
 	fila->primeiro->anterior = elemento;
@@ -74,6 +72,7 @@ void inserirPrimeiro(fila_ordenada_t *fila, aviao_t *dado) {
 }
 
 void inserirUltimo(fila_ordenada_t *fila, aviao_t *dado, int lock) {
+	elemento_t *elemento = aloca_elemento(dado);
 	elemento->proximo = NULL;
 	if (lock == 1)
 		pthread_mutex_lock(&fila->mutexFila);

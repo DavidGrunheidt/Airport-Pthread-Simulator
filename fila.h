@@ -20,7 +20,7 @@ typedef struct {
 	size_t n_elementos;
 	// Entra fila controla o final da fila
 	// Sai fila controla o começo da fila
-	pthread_mutex_t mutexFila
+	pthread_mutex_t mutexFila;
 } fila_ordenada_t;
 
 // Alocacão dinâmica da fila ordenada de aviões
@@ -40,7 +40,7 @@ void inserir (fila_ordenada_t * fila, aviao_t * dado, size_t index);
 // Insere dados na ultima posição da fila
 // Só deve ser utilizada pela funcao inserir, pois o mutex nao é trancado 
 // neste escopo e sim na funcao que a chamou (Contexto de prioridades)
-void inserirPrimeiro(fila_ordenada_t *fila, aviao_t *dado);
+void inserirPrimeiro(fila_ordenada_t *fila, elemento_t *elemento);
 
 // Insere dados na primeira posição da fila. Nesta função o controle
 // dos mutextes pode ser feito dentro de seu escopo, caso lock == 1.

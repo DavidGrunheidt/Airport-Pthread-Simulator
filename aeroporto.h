@@ -2,6 +2,8 @@
 #define AEROPORTO_H
 
 #include <semaphore.h>
+#include <stdio.h>
+#include <unistd.h>
 #include "aviao.h"
 #include "fila.h"
 
@@ -31,26 +33,29 @@ typedef struct {
 
 	// Filas para as pistas do aeroporto e semaforo para indicar
 	// se alguma destas pistas esta livre para pouso
-	fila_ordenada_t *filasPousoDecolagem;
+
+	// PONTEIRO PARA PONTEIROS// TA ERRADU	
+	fila_ordenada_t **filasPousoDecolagem;
 	sem_t pistasLivres;
 } aeroporto_t;
 
 aeroporto_t* iniciar_aeroporto (size_t* args);
-void aproximacao_aeroporto (aeroporto_t* aeroporto, aviao_t* aviao);
+size_t aproximacao_aeroporto (aeroporto_t* aeroporto, aviao_t* aviao);
 //Funções auxiliares da funcão aproximação aeroporto.
-void aproximarNaMelhorFila (aeroporto_t *aeroporto, aviao_t *aviao);
-int acharFilaComMenosAvioes(aeroporto_t *aeroporto);
+size_t aproximarNaMelhorFila (aeroporto_t *aeroporto, aviao_t *aviao);
+size_t acharFilaComMenosAvioes(aeroporto_t *aeroporto);
 void trancaTodasFilas(aeroporto_t *aeroporto);
 void liberaTodasFilas(aeroporto_t *aeroporto);
 
-/**
- * Esta função deve fazer com que o aviao pouse, utilizando uma pista livre.
- * Ela não pode ser chamada se não houver pistas livres. Em seguida o avião
- * deve se acoplar a um portão, caso haja um livre, se não houver, ele deve
- * esperar.
- **/
-
-void pousar_aviao (aeroporto_t* aeroporto, aviao_t* aviao);
+// O idFilaDe aproximação corresponde ao id de uma fila de avioes que
+// aguarda para pousar em uma pista expecifica, e o id desta pista corresponde
+// também ao IdFilaDeAproximacao. Assim ao ser chamada, esta funcao
+// faz lock do mutex correspondente ao IdfilaDeAproximacao do array
+// de mutexes. Feito assim para otimizar, melhor do que
+// ficar verificando mutex por mutex para ver qual esta livre.
+// E para nao implementar algo simples como somente passar pelo semaforo
+// de pistas que é inicializado com o numero de pistas
+void pousar_aviao (aeroporto_t* aeroporto, size_t idAviao, size_t idFilaAproximacao, int tempoPouso);
 
 /**
  * Esta função deve acoplar um avião a um portão de embarque livre.
