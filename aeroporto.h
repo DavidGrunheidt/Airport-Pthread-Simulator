@@ -16,26 +16,32 @@ typedef struct {
 	tempo_t t_remover_bagagens;
 	tempo_t t_inserir_bagagens;
 	tempo_t t_bagagens_esteira;
+
 	// Ponteiros para varias pistas e portoes
 	// Cada pista e portao só pode ter um aviao associado
 	pthread_mutex_t *pistas, *portoes;
+
+	// Semaforo para indicar os portoes livres antes de
+	// um aviao pegar um portao
+	sem_t portoesLivres;
+
 	// Ponteiros para varias esteiras
 	// Cada esteira pode ser associado com "nMax" avioes
 	sem_t *esteiras;
-	// Fila para pouso e semaforo inicializado com a qnt de pistas
-	sem_t pistasLivres;
-	fila_ordenada_t *filaPouso;
 
-	//Variaveis auxiliares para atribuição de pistas
-	int cont;
-	pthread_mutex_t contMutex;
+	// Filas para as pistas do aeroporto e semaforo para indicar
+	// se alguma destas pistas esta livre para pouso
+	fila_ordenada_t *filasPousoDecolagem;
+	sem_t pistasLivres;
 } aeroporto_t;
 
-// Alocação dinamica do aeroporto e atribuição de parametros
 aeroporto_t* iniciar_aeroporto (size_t* args);
-
-//Coloca o avião que requisitou aproximação na fila  (Ultima pos);
 void aproximacao_aeroporto (aeroporto_t* aeroporto, aviao_t* aviao);
+//Funções auxiliares da funcão aproximação aeroporto.
+void aproximarNaMelhorFila (aeroporto_t *aeroporto, aviao_t *aviao);
+int acharFilaComMenosAvioes(aeroporto_t *aeroporto);
+void trancaTodasFilas(aeroporto_t *aeroporto);
+void liberaTodasFilas(aeroporto_t *aeroporto);
 
 /**
  * Esta função deve fazer com que o aviao pouse, utilizando uma pista livre.

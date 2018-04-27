@@ -154,7 +154,7 @@ int main (int argc, char** argv) {
             // Verifica se ele é o primeiro da fila
             // Trava o acesso a fila para verificação e talvez utilização
             // Obs: unica logica de lock e unlock fora da fila (Otimização)
-            pthread_mutex_lock(&meu_aeroporto->filaPouso->saiFila);
+            pthread_mutex_lock(&meu_aeroporto->filaPouso->mutexFila);
             if (meu_aeroporto->filaPouso->primeiro->dado->id == aviao->id) {
                 // Se for o primeiro então pousa o aviao
                 // Obs: mutex é destravado dentro da func 
@@ -168,7 +168,7 @@ int main (int argc, char** argv) {
             // Se não for o primeiro então precisa destravar o mutex já que
             // a parte de destravamento que esta dentro da func pousar_aviao
             // não sera realizada
-                pthread_mutex_unlock(&meu_aeroporto->filaPouso->saiFila);
+                pthread_mutex_unlock(&meu_aeroporto->filaPouso->mutexFila-);
             }
         }
     }
