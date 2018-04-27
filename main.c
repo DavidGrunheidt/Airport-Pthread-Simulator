@@ -15,6 +15,7 @@
 #define TEMPO_SIMULACAO 10000 // 10 segundos
 
 void *simularAviao(void *arg);
+void pousar(aeroporto_t *meu_aeroporto, aviao_t *aviao);
 
 typedef struct {
     aeroporto_t *aeroporto;
@@ -139,32 +140,36 @@ int main (int argc, char** argv) {
         // Liberação de memoria de args
         free(args);
 
-        // Fase de aproximação, logica toda na função no modulo avião
         aproximacao_aeroporto(meu_aeroporto, aviao);
 
-        // Fase de pouso, parte da logica no main
-        // Verifica se liberou uma pista, se sim então verifica
-        // se o aviao esta em um dos lugares das filas com index
-        // menor ou igual ao numero de pistas, já que estes lugares
-        // que tem prioridade de pouso
-        size_t index;
+        pousar(meu_aeroporto, aviao);
+
+
+    }
+
+    void pousar(aeroporto_t *meu_aeroporto, aviao_t *aviao) {
         while (1) {
             // Aguarda uma pista das npistas livres
-            sem_wait(&meu_aeroporto->SemPousar);
-            // Liberou uma pista, então verifica se ele tem prioridade
-            index = at(meu_aeroporto->filaPouso, aviao);
-            // Se tiver prioridade, aguarda o tempo de pouso e sai do laço
-            // Caso contrario libera o semaforo mesmo assim
-            if (index <= meu_aeroporto->n_pistas) {
+            sem_wait(&meu_aeroporto->pistasLivres);
+            // Verifica se ele é o primeiro da fila
+            // Trava o acesso a fila para verificação e talvez utilização
+            // Obs: unica logica de lock e unlock fora da fila (Otimização)
+            pthread_mutex_lock(&meu_aeroporto->filaPouso->saiFila);
+            if (meu_aeroporto->filaPouso->primeiro->dado->id == aviao->id) {
+                // Se for o primeiro então pousa o aviao
+                // Obs: mutex é destravado dentro da func 
                 pousar_aviao(meu_aeroporto, aviao);
+                // Aguarda o tempo de pouso antes de liberar a pista
                 usleep((int) TEMPO_POUSO_DECOLAGEM);
+                sem_post(&meu_aeroporto->pistasLivres);
+                // Sai do laço
                 break;
+            } else {
+            // Se não for o primeiro então precisa destravar o mutex já que
+            // a parte de destravamento que esta dentro da func pousar_aviao
+            // não sera realizada
+                pthread_mutex_unlock(&meu_aeroporto->filaPouso->saiFila);
             }
-            sem_post(&meu_aeroporto->SemPousar);
         }
-
-
-
-
     }
 

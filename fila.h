@@ -18,6 +18,8 @@ typedef struct {
 	elemento_t * primeiro;
 	elemento_t * ultimo;
 	size_t n_elementos;
+	// Entra fila controla o final da fila
+	// Sai fila controla o começo da fila
 	pthread_mutex_t entraFila, saiFila;
 } fila_ordenada_t;
 
@@ -27,12 +29,10 @@ fila_ordenada_t * criar_fila ();
 // Desaloca a fila.
 void desaloca_fila (fila_ordenada_t * fila);
 
-// Insere dados de forma ordenada na fila
+// Insere dados de forma ordenada na fila com prioridades
 void inserir (fila_ordenada_t * fila, aviao_t * dado);
 
-// Remove o indeximo elemento da fila (considere o 1º index = 1)
-aviao_t * remover (fila_ordenada_t * fila, aviao_t *aviao);
+// Remove o primeiro elemento da fila)
+aviao_t * remover (fila_ordenada_t * fila);
 
-// Retorna o index que o aviao esta
-size_t at (fila_ordenada_t * fila, aviao_t *aviao);
 #endif

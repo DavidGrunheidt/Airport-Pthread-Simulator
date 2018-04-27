@@ -23,8 +23,12 @@ typedef struct {
 	// Cada esteira pode ser associado com "nMax" avioes
 	sem_t *esteiras;
 	// Fila para pouso e semaforo inicializado com a qnt de pistas
-	sem_t SemPousar;
+	sem_t pistasLivres;
 	fila_ordenada_t *filaPouso;
+
+	//Variaveis auxiliares para atribuição de pistas
+	int cont;
+	pthread_mutex_t contMutex;
 } aeroporto_t;
 
 // Alocação dinamica do aeroporto e atribuição de parametros
@@ -40,7 +44,6 @@ void aproximacao_aeroporto (aeroporto_t* aeroporto, aviao_t* aviao);
  * esperar.
  **/
 
-// Trylock em todas as pistas ate achar uma disponivel
 void pousar_aviao (aeroporto_t* aeroporto, aviao_t* aviao);
 
 /**

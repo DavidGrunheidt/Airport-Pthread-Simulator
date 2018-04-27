@@ -49,78 +49,48 @@ void desaloca_fila (fila_ordenada_t * fila) {
 
 void inserir (fila_ordenada_t * fila, aviao_t * dado) {
 	elemento_t *elemento = aloca_elemento(dado);
+	elemento->proximo = NULL;
 
-	if (dado->combustivel < 10) {
-		pthread_mutex_lock(&fila->saiFila);
-		fila->primeiro->anterior = elemento;
-		elemento->proximo = fila->primeiro;
-		elemento->anterior = NULL;
+	// Só uma thread por vez mexendo no final da fila
+	pthread_mutex_lock(&fila->entraFila);
+	if (fila->n_elementos == 0) {
 		fila->primeiro = elemento;
-		fila->n_elementos++;
-		pthread_mutex_unlock(&fila->saiFila);
+		fila->ultimo = elemento;
 	} else {
-		pthread_mutex_lock(&fila->entraFila);
-		fila->ultimo->proximo = elemento;
-		elemento->anterior = fila->ultimo;
-		elemento->proximo = NULL;
-		fila->n_elementos++;
-		pthread_mutex_lock(&fila->entraFila);
-	}
-}
-
-// Mudar pra achar o aviao em vez do index
-aviao_t * remover (fila_ordenada_t * fila, aviao_t *aviao) {
-	if (1) {
-		pthread_mutex_lock(&fila->saiFila);
-		elemento_t *elementoRemovido = fila->primeiro;
-		for (int i = 1; i < fila->n_elementos; i++) 
-			elementoRemovido = elementoRemovido->proximo;
-
-		if (index != 1)
-			elementoRemovido->anterior->proximo = elementoRemovido->proximo;
-		else
-			fila->primeiro = elementoRemovido->proximo;
-
-		elementoRemovido->proximo->anterior = elementoRemovido->anterior;
-
-		desaloca_elemento(elementoRemovido);
-		fila->n_elementos--;
-		pthread_mutex_unlock(&fila->saiFila);
-	} else {
-		if (index == fila->n_elementos) {
-			pthread_mutex_lock(&fila->entraFila);
-			elemento_t *elementoRemovido = fila->ultimo;
-
-			fila->ultimo = elementoRemovido->anterior;
-			fila->ultimo->proximo = NULL;
-			desaloca_elemento(elementoRemovido);
-			fila->n_elementos--;
-			pthread_mutex_unlock(&fila->entraFila);
-		}
-	}
-}
-
-size_t at (fila_ordenada_t * fila, aviao_t *aviao) {
-	int index = 0;
-
-	elemento_t *elementoAux = fila->primeiro;
-
-	for (int i = 1; i <= fila->n_elementos; i++) {
-		if (i+1 == fila->n_elementos)
+		// Priodade de pouso com combustivel inferior a 10%
+		// Adiciona na primeira posição da fila
+		if (dado->combustivel < 10) {
+			// Travar o começo da fila também, já que o aviao
+			// é adicionado la, em vez de ser no final (prioridade)
 			pthread_mutex_lock(&fila->saiFila);
-
-
-		if (elementoAux->dado->id = aviao->id) {
-			index = i;
-			break;
-		} else {
-			if (i+1 == fila->n_elementos) {
-				pthread_mutex_lock(&fila->saiFila);
-				elementoAux = elementoAux->proximo;
-			}
-		}
-		if (i == fila->n_elementos)
+			fila->primeiro->anterior = elemento;
+			elemento->proximo = fila->primeiro;
+			elemento->anterior = NULL;
+			fila->primeiro = elemento;
+			fila->n_elementos++;
 			pthread_mutex_unlock(&fila->saiFila);
+		} else {
+			// Sem prioridade de pouso, vai para o final da fila
+			fila->ultimo->proximo = elemento;
+			elemento->anterior = fila->ultimo;
+			fila->n_elementos++;
+		}
 	}
-	return index;
+	pthread_mutex_unlock(&fila->entraFila);
+}
+
+aviao_t * remover (fila_ordenada_t * fila) {
+	// Não é necessario dar lock no mutex, já é feito no main
+	aviao_t *aviao;
+
+	elemento_t *elementoRemovido = fila->primeiro;
+	fila->primeiro = fila->primeiro->proximo;
+	aviao = elementoRemovido->dado;
+
+	// Somente o destravamento é necessario visto que só é possivel
+	// chegar nesta função após travar o mutex no main e
+	// verificar se o aviao é o primeiro
+	pthread_mutex_unlock(&fila->saiFila);
+
+	return aviao;
 }

@@ -33,19 +33,23 @@ aeroporto_t* iniciar_aeroporto (size_t* args) {
 	for (int i = 0; i < nesteiras; i++)
 		sem_init((aeroporto->esteiras + i), 0, n_max_avioes_esteira);
 
-	sem_init(&aeroporto->SemPousar, 0, npistas);
+	sem_init(&aeroporto->pistasLivres, 0, npistas);
 
 	aeroporto->filaPouso = (fila_ordenada_t *) criar_fila();
+
+	aeroporto->cont = 0;
+	pthread_mutex_init(&aeroporto->contMutex, NULL);
 
 	return aeroporto;	
 }
 
 void aproximacao_aeroporto (aeroporto_t* aeroporto, aviao_t* aviao) {
-	
+	// Logica de lock e unlock invisivel (realizada na logica da fila)
+	inserir(aeroporto->filaPouso, aviao);
 }
 
 void pousar_aviao (aeroporto_t* aeroporto, aviao_t* aviao) {
-
+	pthread
 }
 
 void acoplar_portao (aeroporto_t* aeroporto, aviao_t* aviao) {
