@@ -13,7 +13,6 @@ elemento_t * aloca_elemento (aviao_t * dado) {
 }
 
 void desaloca_elemento (elemento_t * elemento) {
-	free(elemento->dado);
 	free(elemento);
 }
 
@@ -30,17 +29,6 @@ fila_ordenada_t * criar_fila () {
 }
 
 void desaloca_fila (fila_ordenada_t * fila) {
-	pthread_mutex_lock(&fila->mutexFila);
-
-	elemento_t *elemento = fila->primeiro->proximo;
-	while (elemento != fila->ultimo) {
-		desaloca_elemento(elemento);
-		elemento = elemento->proximo;
-	}
-	desaloca_elemento(elemento);
-
-	pthread_mutex_unlock(&fila->mutexFila);
-
 	pthread_mutex_destroy(&fila->mutexFila);
 	free(fila);
 }
@@ -65,38 +53,53 @@ void inserir (fila_ordenada_t * fila, aviao_t * dado, size_t index) {
 
 void inserirPrimeiro(fila_ordenada_t *fila, elemento_t *elemento) {
 	elemento->anterior = NULL;
-	elemento->proximo = fila->primeiro;
-	fila->primeiro->anterior = elemento;
-	fila->primeiro = elemento;
+	if (fila->n_elementos == 0) {
+		fila->ultimo = elemento;
+		fila->primeiro = elemento;
+		elemento->proximo = NULL;
+	} else {
+		elemento->proximo = fila->primeiro;
+		fila->primeiro->anterior = elemento;
+		fila->primeiro = elemento;
+	}
 	fila->n_elementos++;
 }
 
-void inserirUltimo(fila_ordenada_t *fila, aviao_t *dado, int lock) {
+size_t inserirUltimo(fila_ordenada_t *fila, aviao_t *dado, int lock) {
 	elemento_t *elemento = aloca_elemento(dado);
-	elemento->proximo = NULL;
+	size_t index = 0;
+
 	if (lock == 1)
 		pthread_mutex_lock(&fila->mutexFila);
-	elemento->anterior = fila->ultimo;
-	fila->ultimo->proximo = elemento;
-	fila->ultimo = elemento;
-	fila->n_elementos++;
+
+	if (fila->n_elementos == 0) {
+		inserirPrimeiro(fila, elemento);
+	} else {
+		elemento->proximo = NULL;
+		elemento->anterior = fila->ultimo;
+		fila->ultimo->proximo = elemento;
+		fila->ultimo = elemento;
+		index = fila->n_elementos;
+		fila->n_elementos++;
+	}
+
 	if (lock == 1)
 		pthread_mutex_unlock(&fila->mutexFila);
 
+	return index;
 }
 
-aviao_t * remover (fila_ordenada_t * fila) {
+void remover (fila_ordenada_t * fila) {
 	// Não é necessario dar lock no mutex, já é feito no main
-	aviao_t *aviao;
-
 	elemento_t *elementoRemovido = fila->primeiro;
 	fila->primeiro = fila->primeiro->proximo;
-	aviao = elementoRemovido->dado;
+	fila->n_elementos--;
 
 	// Somente o destravamento é necessario visto que só é possivel
 	// chegar nesta função após travar o mutex no main e
 	// verificar se o aviao é o primeiro
 	pthread_mutex_unlock(&fila->mutexFila);
 
-	return aviao;
+	desaloca_elemento(elementoRemovido);
+
 }

@@ -2,6 +2,7 @@
 #define FILA_AVIAO_H
 
 #include "aviao.h"
+#include <stdio.h>
 
 typedef struct elemento_t {
 	struct elemento_t * anterior;
@@ -37,17 +38,16 @@ void desaloca_fila (fila_ordenada_t * fila);
 // o travamento é feito só uma vez
 void inserir (fila_ordenada_t * fila, aviao_t * dado, size_t index);
 
-// Insere dados na ultima posição da fila
-// Só deve ser utilizada pela funcao inserir, pois o mutex nao é trancado 
-// neste escopo e sim na funcao que a chamou (Contexto de prioridades)
+// Insere dados na primeira posição da fila
+// Controle do mutex feito fora do escopo
 void inserirPrimeiro(fila_ordenada_t *fila, elemento_t *elemento);
 
-// Insere dados na primeira posição da fila. Nesta função o controle
+// Insere dados na ultima posição da fila. Nesta função o controle
 // dos mutextes pode ser feito dentro de seu escopo, caso lock == 1.
 // Caso contrario o controle é feito na funcao que a chama
-void inserirUltimo(fila_ordenada_t *fila, aviao_t *dado, int lock);
+size_t inserirUltimo(fila_ordenada_t *fila, aviao_t *dado, int lock);
 
 // Remove o primeiro elemento da fila)
-aviao_t * remover (fila_ordenada_t * fila);
+void remover (fila_ordenada_t * fila);
 
 #endif

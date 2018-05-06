@@ -3,10 +3,11 @@
 #include "aeroporto.h"
 #include "fila.h"
 
-#define NOVO_AVIAO_MIN 30
-#define NOVO_AVIAO_MAX 120
+#define NOVO_AVIAO_MIN 30000 // 30 milisegundos
+#define NOVO_AVIAO_MAX 120000 // 120  milisegundos
 #define COMBUSTIVEL_MIN 5
-#define COMBUSTIVEL_MAX 80
+#define COMBUSTIVEL_MAX 15
+#define TEMPO_APROXIMACAO_AERO  700000 //  700 milisegundos
 #define TEMPO_POUSO_DECOLAGEM 40
 #define TEMPO_REMOVER_BAGAGENS 90
 #define TEMPO_INSERIR_BAGAGENS 110
@@ -24,7 +25,7 @@ typedef struct {
 
 // Variáveis temporais (inicio t_)
 size_t t_novo_aviao_min, t_novo_aviao_max;
-size_t t_pouso_decolagem;
+size_t t_aproximacao_aero, t_pouso_decolagem;
 size_t t_remover_bagagens, t_inserir_bagagens;
 size_t t_bagagens_esteira, t_simulacao;
 
@@ -40,6 +41,7 @@ int main (int argc, char** argv) {
     if (argc == 5) { // Argumentos sem tempos de execução
         t_novo_aviao_min = NOVO_AVIAO_MIN;
         t_novo_aviao_max = NOVO_AVIAO_MAX;
+        t_aproximacao_aero = TEMPO_APROXIMACAO_AERO;
         t_pouso_decolagem = TEMPO_POUSO_DECOLAGEM;
         t_remover_bagagens = TEMPO_REMOVER_BAGAGENS;
         t_inserir_bagagens = TEMPO_INSERIR_BAGAGENS;
@@ -52,12 +54,13 @@ int main (int argc, char** argv) {
         n_max_avioes_esteira = atoi(argv[3]);
         n_esteiras = atoi(argv[4]);
 
-    } else if (argc == 14) { // Argumentos com tempos de execução
+    } else if (argc == 15) { // Argumentos com tempos de execução
         int i = 0; // Este contador será incrementado antes de coletar um argumento
         t_novo_aviao_min = atoi(argv[++i]);
         t_novo_aviao_max = atoi(argv[++i]);
         p_combustivel_min = atoi(argv[++i]);
         p_combustivel_max = atoi(argv[++i]);
+        t_aproximacao_aero = atoi(argv[++i]);
         t_pouso_decolagem = atoi(argv[++i]);
         n_pistas = atoi(argv[++i]);
         t_remover_bagagens = atoi(argv[++i]);
@@ -71,7 +74,7 @@ int main (int argc, char** argv) {
     } else { // Número incorreto de argumentos
         printf("Todas as entradas são inteiros positivos!!\nUso:\n");
         printf("./aeroporto  NOVO_AVIAO_MIN  NOVO_AVIAO_MAX\n");
-        printf("COMBUSTIVEL_MIN COMBUSTIVEL_MAX\n");
+        printf("COMBUSTIVEL_MIN COMBUSTIVEL_MAX   TEMPO_APROXIMACAO_AERO\n");
         printf("TEMPO_POUSO_DECOLAGEM  NUMERO_PISTAS  TEMPO_REMOVER_BAGAGENS\n");
         printf("TEMPO_INSERIR_BAGAGENS  NUMERO_PORTOES  MAXIMO_AVIOES_ESTEIRA\n");
         printf("TEMPO_BAGAGENS_ESTEIRA  NUMERO_ESTEIRAS  TEMPO_SIMULACAO\n");
@@ -91,84 +94,84 @@ int main (int argc, char** argv) {
     printf("Tempo das bagagens nas esteiras: %lu\n", t_bagagens_esteira);
 
     // Inicialização do aeroporto
-    size_t args[8] = {n_pistas, n_portoes, n_esteiras,
-        n_max_avioes_esteira,
-        t_pouso_decolagem, t_remover_bagagens,
-        t_inserir_bagagens, t_bagagens_esteira};
+    size_t args[9] = {n_pistas, n_portoes, n_esteiras, n_max_avioes_esteira, t_aproximacao_aero, t_pouso_decolagem, t_remover_bagagens, t_inserir_bagagens, t_bagagens_esteira};
 
-        aeroporto_t* meu_aeroporto = iniciar_aeroporto(args);
+    aeroporto_t* aero = iniciar_aeroporto(args);
 
-        size_t contAvioes = 0;
-        int wait;
-        while (contAvioes < 10) {
-            unsigned int seed = time(NULL);
-            criarAviao(seed, contAvioes, meu_aeroporto);
-            wait = t_novo_aviao_min + rand_r(&seed) % (t_novo_aviao_max - t_novo_aviao_min); 
-            // Esperar um tempo para criar outro aviao
-            usleep(wait * 1000);
-            contAvioes++;
-        }
+    size_t contAvioes = 0;
+    int wait;
+    int nAvioes = 8;
+    aviao_t **aviao = (aviao_t **) malloc (nAvioes * sizeof(aviao_t*));
 
-        finalizar_aeroporto(meu_aeroporto);
-        return 1;
-    }
+    while (contAvioes < nAvioes) {
 
-    void criarAviao(unsigned int seed, size_t idAviao, aeroporto_t *aero) {
         // Define uma porcentagem de combustivel de 5 a 80%
-        size_t combustivel = p_combustivel_min + rand_r(&seed) % ( p_combustivel_max - p_combustivel_min);
+        size_t combustivel = p_combustivel_min + rand() % (p_combustivel_max - p_combustivel_min);
+
         // Aloca memoria dinamica na heap para struct aviao
-        aviao_t *aviao = criar_aviao(idAviao, combustivel);
+        aviao[contAvioes] = criar_aviao(contAvioes, combustivel);
+
         // Aloca dinamicamente os argumentos da função, de modo que 
         // eles não sejam destruidos no final do laço
         // thread é responsavel por desalocar (free)
         arg_t *argAux = (arg_t *) malloc(sizeof(arg_t));
         argAux->aeroporto = aero;
-        argAux->aviao = aviao;
+        argAux->aviao = aviao[contAvioes];
+
         // Cria a thread que representa o aviao
         // Todo a logica principal do programa se passa aqui
-        pthread_create(&aviao->thread, NULL, simularAviao,(void *) argAux);
+        pthread_create(&aviao[contAvioes]->thread, NULL, simularAviao,(void *) argAux);
+
+        wait = t_novo_aviao_min + rand() % (t_novo_aviao_max - t_novo_aviao_min); 
+        // Esperar um tempo para criar outro aviao
+        usleep(wait);
+        contAvioes++;
+    }  
+
+    for (int i = 0; i < nAvioes; i++) {
+        pthread_join(aviao[i]->thread, NULL);
+        desaloca_aviao(aviao[i]);
     }
-    
-    // Ordem dos eventos do avião desde o pouso a decolagem é sequencial
-    void *simularAviao(void *arg) {
+
+    free(aviao);
+
+    finalizar_aeroporto(aero);
+    return 1;
+}
+
+void *simularAviao(void *arg) {
         // args em forma de vetor para porder liberar memoria
-        arg_t *args = ((arg_t *)arg);
-        aeroporto_t *meu_aeroporto =  args->aeroporto;
-        aviao_t *aviao = args->aviao;
+    arg_t *args = ((arg_t *)arg);
+    aeroporto_t *meu_aeroporto =  args->aeroporto;
+    aviao_t *aviao = args->aviao;
         // Liberação de memoria de args
-        free(args);
+    free(args);
 
-        size_t idFilaDeAproximacao = aproximacao_aeroporto(meu_aeroporto, aviao);
+    size_t idFilaDeAproximacao = aproximacao_aeroporto(meu_aeroporto, aviao);
+    pousar(meu_aeroporto, aviao, idFilaDeAproximacao);
+}
 
-        pousar(meu_aeroporto, aviao, idFilaDeAproximacao);
-
-
-    }
-
-    void pousar(aeroporto_t *meu_aeroporto, aviao_t *aviao, size_t idFilaDeAproximacao) {
-        while (1) {
-            // Aguarda uma pista das npistas livres
-            sem_wait(&meu_aeroporto->pistasLivres);
-            // Verifica se ele é o primeiro da fila
-            // Trava o acesso a fila para verificação e talvez utilização
-            // Obs: unica logica de lock e unlock fora da fila (Otimização)
-            pthread_mutex_lock(&meu_aeroporto->filasPousoDecolagem[idFilaDeAproximacao]->mutexFila);
-            if (meu_aeroporto->filasPousoDecolagem[idFilaDeAproximacao]->primeiro->dado->id == aviao->id) {
-                // Se for o primeiro então pousa o aviao
-                // Obs: mutex da fila é destravado dentro da func de remoção
-                // na logica da fila 
-                pousar_aviao(meu_aeroporto, aviao->id, idFilaDeAproximacao, t_pouso_decolagem);
-                // Libera a pista para outro aviao pousar
-                pthread_mutex_unlock((meu_aeroporto->pistas +idFilaDeAproximacao));
-                sem_post(&meu_aeroporto->pistasLivres);
-                // Sai do laço
-                break;
-            } else {
+void pousar(aeroporto_t *meu_aeroporto, aviao_t *aviao, size_t idFilaDeAproximacao) {
+    while (1) {
+        // Aguarda uma pista das npistas livres
+        sem_wait(&meu_aeroporto->pistasLivres);
+        // Verifica se ele é o primeiro da fila
+        // Trava o acesso a fila para verificação e talvez utilização
+        // Obs: unica logica de lock e unlock fora da fila (Otimização)
+        pthread_mutex_lock(&meu_aeroporto->filasPousoDecolagem[idFilaDeAproximacao]->mutexFila);
+        if (meu_aeroporto->filasPousoDecolagem[idFilaDeAproximacao]->primeiro->dado->id == aviao->id) {
+            // Se for o primeiro então pousa o aviao
+            // Obs: mutex da fila é destravado dentro da func de remoção
+            // na logica da fila 
+            pousar_aviao(meu_aeroporto, aviao->id, idFilaDeAproximacao);
+            break;
+        } else {
             // Se não for o primeiro então precisa destravar o mutex já que
             // a parte de destravamento que esta dentro da func de remoção do
             // aviao da fila de aproximação (remover) não acontecerá.
-                pthread_mutex_unlock(&meu_aeroporto->filasPousoDecolagem[idFilaDeAproximacao]->mutexFila);
-            }
+            pthread_mutex_unlock(&meu_aeroporto->filasPousoDecolagem[idFilaDeAproximacao]->mutexFila);
+            sem_post(&meu_aeroporto->pistasLivres);
         }
     }
+}
 

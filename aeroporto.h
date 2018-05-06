@@ -18,6 +18,7 @@ typedef struct {
 	tempo_t t_remover_bagagens;
 	tempo_t t_inserir_bagagens;
 	tempo_t t_bagagens_esteira;
+	tempo_t t_aproximacao_aero;
 
 	// Ponteiros para varias pistas e portoes
 	// Cada pista e portao só pode ter um aviao associado
@@ -42,7 +43,7 @@ typedef struct {
 aeroporto_t* iniciar_aeroporto (size_t* args);
 size_t aproximacao_aeroporto (aeroporto_t* aeroporto, aviao_t* aviao);
 //Funções auxiliares da funcão aproximação aeroporto.
-size_t aproximarNaMelhorFila (aeroporto_t *aeroporto, aviao_t *aviao);
+size_t aproximarNaMelhorFila (aeroporto_t *aeroporto, aviao_t *aviao, size_t *index);
 size_t acharFilaComMenosAvioes(aeroporto_t *aeroporto);
 void trancaTodasFilas(aeroporto_t *aeroporto);
 void liberaTodasFilas(aeroporto_t *aeroporto);
@@ -55,7 +56,7 @@ void liberaTodasFilas(aeroporto_t *aeroporto);
 // ficar verificando mutex por mutex para ver qual esta livre.
 // E para nao implementar algo simples como somente passar pelo semaforo
 // de pistas que é inicializado com o numero de pistas
-void pousar_aviao (aeroporto_t* aeroporto, size_t idAviao, size_t idFilaAproximacao, int tempoPouso);
+void pousar_aviao (aeroporto_t* aeroporto, size_t idAviao, size_t idFilaAproximacao);
 
 /**
  * Esta função deve acoplar um avião a um portão de embarque livre.
