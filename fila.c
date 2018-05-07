@@ -36,11 +36,11 @@ void desaloca_fila (fila_ordenada_t * fila) {
 void inserir (fila_ordenada_t * fila, aviao_t * dado, size_t index) {
 	elemento_t *elemento = aloca_elemento(dado);
 	if (index <= fila->n_elementos) {
-		if (index == 1) {
+		if (index == 0) {
 			inserirPrimeiro(fila, elemento);
 		} else {
 			elemento_t *elementoAux = fila->primeiro;
-			for (int i = 1; i < index; i++)
+			for (int i = 0; i < index; i++)
 				elementoAux = elementoAux->proximo;
 			elemento->anterior = elementoAux->anterior;
 			elemento->proximo = elementoAux;

@@ -87,12 +87,12 @@ size_t aproximarNaMelhorFila (aeroporto_t *aeroporto, aviao_t *aviao, size_t *in
 			elementoAux = aeroporto->filasPousoDecolagem[i]->primeiro;
 			if (cont < aeroporto->filasPousoDecolagem[i]->n_elementos) {
 					// Vai até o elemento na posição cont em cada fila
-				for (int j = 1 ; j < cont; j++) 
+				for (int j = 0 ; j < cont; j++) 
 					elementoAux = elementoAux->proximo;
 				if (elementoAux->dado->combustivel >= 10) {
 					// Insere na pos do elemento se este n tiver prioridade
 					filaInserido = i;
-					inserir(aeroporto->filasPousoDecolagem[i], aviao, cont+1);
+					inserir(aeroporto->filasPousoDecolagem[i], aviao, cont);
 					*index = cont;
 					liberaTodasFilas(aeroporto);
 					// Sinalização para break do primeiro laço		
@@ -112,10 +112,8 @@ size_t aproximarNaMelhorFila (aeroporto_t *aeroporto, aviao_t *aviao, size_t *in
 		if (chegouUltimo == aeroporto->n_pistas) {
 			// Todas filas tem todos elementos c/ prioridade
 			// Procura a menor fila (c/ menos elementos, p/ aproximar)
-			printf("Cheguei\n");
-			fflush(stdout);
 			filaInserido = acharFilaComMenosAvioes(aeroporto);
-			*index = inserirUltimo(aeroporto->filasPousoDecolagem[filaInserido], aviao, 0)-1;
+			*index = inserirUltimo(aeroporto->filasPousoDecolagem[filaInserido], aviao, 0);
 			liberaTodasFilas(aeroporto);
 				// Sai do laço principal	
 			break;
@@ -128,8 +126,9 @@ size_t aproximarNaMelhorFila (aeroporto_t *aeroporto, aviao_t *aviao, size_t *in
 }
 
 size_t acharFilaComMenosAvioes(aeroporto_t *aeroporto) {
-	int indexMenor = 0, numMenor = 0;
-	for (int i = 0; i < aeroporto->n_pistas; i++) {
+	int indexMenor = 0, numMenor = aeroporto->filasPousoDecolagem[0]->n_elementos;
+	fflush(stdout);
+	for (int i = 1; i < aeroporto->n_pistas; i++) {
 		if (aeroporto->filasPousoDecolagem[i]->n_elementos < numMenor) {
 			indexMenor = i;
 			numMenor = aeroporto->filasPousoDecolagem[i]->n_elementos;

@@ -6,8 +6,8 @@
 #define NOVO_AVIAO_MIN 30000 // 30 milisegundos
 #define NOVO_AVIAO_MAX 120000 // 120  milisegundos
 #define COMBUSTIVEL_MIN 5
-#define COMBUSTIVEL_MAX 15
-#define TEMPO_APROXIMACAO_AERO  700000 //  700 milisegundos
+#define COMBUSTIVEL_MAX 65
+#define TEMPO_APROXIMACAO_AERO  500000 //  500  milisegundos
 #define TEMPO_POUSO_DECOLAGEM 40
 #define TEMPO_REMOVER_BAGAGENS 90
 #define TEMPO_INSERIR_BAGAGENS 110
@@ -100,11 +100,10 @@ int main (int argc, char** argv) {
 
     size_t contAvioes = 0;
     int wait;
-    int nAvioes = 8;
+    int nAvioes = 100;
     aviao_t **aviao = (aviao_t **) malloc (nAvioes * sizeof(aviao_t*));
 
     while (contAvioes < nAvioes) {
-
         // Define uma porcentagem de combustivel de 5 a 80%
         size_t combustivel = p_combustivel_min + rand() % (p_combustivel_max - p_combustivel_min);
 
