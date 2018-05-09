@@ -7,6 +7,12 @@
 #include "aviao.h"
 #include "fila.h"
 
+typedef struct {
+	size_t nEsteira;
+	size_t tBagNaEsteira;
+	sem_t *semEsteira;
+} argAx;
+
 typedef size_t tempo_t;
 
 typedef struct {
@@ -16,8 +22,8 @@ typedef struct {
 	size_t n_max_avioes_esteira;
 	tempo_t t_pouso_decolagem;
 	tempo_t t_remover_bagagens;
-	tempo_t t_inserir_bagagens;
 	tempo_t t_bagagens_esteira;
+	tempo_t t_inserir_bagagens;
 	tempo_t t_aproximacao_aero;
 
 	// Ponteiros para varias pistas e portoes
@@ -34,65 +40,68 @@ typedef struct {
 
 	// Filas para as pistas do aeroporto e semaforo para indicar
 	// se alguma destas pistas esta livre para pouso
-
-	// PONTEIRO PARA PONTEIROS// TA ERRADU	
+	
 	fila_ordenada_t **filasPousoDecolagem;
+	fila_ordenada_t **filasPortoes;
 	sem_t pistasLivres;
 } aeroporto_t;
 
+size_t acharFilaComMenosAvioes(fila_ordenada_t **filas, int nFilas);
+void trancaTodasFilas(fila_ordenada_t **filas, int nFilas);
+void liberaTodasFilas(fila_ordenada_t **filas, int nFilas);
+
 aeroporto_t* iniciar_aeroporto (size_t* args);
-size_t aproximacao_aeroporto (aeroporto_t* aeroporto, aviao_t* aviao);
-//Funções auxiliares da funcão aproximação aeroporto.
+
+// Sinaliza a intenção de pousar ou decolagem e é inserido em uma fila
+// esperando sua vez para realizar a ação
+size_t solicitarPista (aeroporto_t* aeroporto, aviao_t* aviao, size_t pousoOuDecolagem);
+
+// Verifica se tem prioridade ou não e insere na melhor fila
+// ou seja, a fila com menos elementos
 size_t aproximarNaMelhorFila (aeroporto_t *aeroporto, aviao_t *aviao, size_t *index);
-size_t acharFilaComMenosAvioes(aeroporto_t *aeroporto);
-void trancaTodasFilas(aeroporto_t *aeroporto);
-void liberaTodasFilas(aeroporto_t *aeroporto);
 
-// O idFilaDe aproximação corresponde ao id de uma fila de avioes que
-// aguarda para pousar em uma pista expecifica, e o id desta pista corresponde
-// também ao IdFilaDeAproximacao. Assim ao ser chamada, esta funcao
-// faz lock do mutex correspondente ao IdfilaDeAproximacao do array
-// de mutexes. Feito assim para otimizar, melhor do que
-// ficar verificando mutex por mutex para ver qual esta livre.
-// E para nao implementar algo simples como somente passar pelo semaforo
-// de pistas que é inicializado com o numero de pistas
-void pousar_aviao (aeroporto_t* aeroporto, size_t idAviao, size_t idFilaAproximacao);
+// auxiliar da funcao aproximaNaMelhorFila (para aviões com prioridade)
+void procurarFilaComAviaoSemPrioridade(aeroporto_t *aeroporto, aviao_t *aviao, size_t *filaInserido, size_t *index, size_t *chegouUltimo, size_t *inseriu, size_t cont);
 
-/**
- * Esta função deve acoplar um avião a um portão de embarque livre.
- * Ela não deve ser chamada caso não hajam portões livres. Em seguida, o
- * o avião deve transportar suas bagagens para fora e receber novas bagagens.
- * Um avião não pode decolar sem receber novas bagagens.
- **/
-void acoplar_portao (aeroporto_t* aeroporto, aviao_t* aviao);
+// Verifica se o aviao é o primeiro da fila para usar a pista 
+// daquela fila. Se for então chama sua função auxiliar para
+// pousar ou decolar e utilizar o recurso pista
+void usarPistaSePrimeiroDaFilaPista(aeroporto_t *aeroporto, aviao_t *aviao, size_t idFilaDeAproximacao, size_t pousoOuDecolagem);
 
-/**
- * Esta função deve levar as bagagens de um avião para uma esteira e
- * colocar novas bagagens num avião para que ele seja liberado para
- * decolagem. Um avião não pode decolar sem receber novas bagagens.
- * Um avião não pode receber novas bagagens sem colocar as antigas
- * em uma esteira.
- **/
-void transportar_bagagens (aeroporto_t* aeroporto, aviao_t* aviao);
+// Funcao onde a utilização do recurso pista é feita
+// para pouso ou decolagem
+void usarPista (aeroporto_t* aeroporto, size_t idAviao, size_t idPista, size_t pousoOuDecolagem);
 
-/**
- * Esta função deve colocar novas bagagens numa esteira, caso ela
- * esteja disponível. A esteira ficará ocupada enquanto houverem
- * bagagens nela.
- **/
-void adicionar_bagagens_esteira (aeroporto_t* aeroporto, aviao_t* aviao);
+// Avião é primeiramente inserido em uma fila sinalizando a intenção
+// de querer acoplar. Assim que ele pousa ele é inserido na fila e se quando
+// este for o primeiro da fila entao ele acopla. É importante ter uma fila
+// caso o numero de portoes seja pouco, já que nem sempre terá
+// portoes para todos que pousaram.
+size_t solicitarAcoplagem(aeroporto_t *aeroporto, aviao_t *aviao);
 
-/**
- * Esta função deve fazer com que um avião decole, caso haja
- * uma pista disponível para tal. Um avião que decolar deve
- * ter sua execução terminada.
- **/
-void decolar_aviao (aeroporto_t* aeroporto, aviao_t* aviao);
+// Vereficia se é o primeiro da fila de acoplagem, se for, acopla
+void acoplarSePrimeiroDafilaDeAcoplagem(aeroporto_t *aeroporto, aviao_t *aviao , size_t idFilaDeAclopagem);
+// Auxiliar da função que verifica, a acoplagem é feita aqui
+// realiza o consumo do portao
+void acoplar_portao (aeroporto_t* aeroporto, size_t idAviao, size_t idPortao);
 
-/**
- * Esta função deve desalocar todos os recursos previamente
- * alocados pelo aeroporto. Retorna 1 caso bem sucedido.
- **/
+// Aviao aguarda uma esteira livre para transportar suas bagagens
+// e depois insere novas bagagens nele. Realiza o consumo de alguma
+// esteira
+void transportar_bagagens (aeroporto_t* aeroporto, aviao_t* aviao, size_t idPortao);
+
+// Aviao nao depende do tBagagensNaEsteira, logo é criada
+// outra thread para esperar este tempo enquanto o aviao
+// continua sua simulação, e qnd o tempo acabar
+// a thread libera a esteira que o aviao anteriormente consumiu
+void* simularBagagensEsteira (void *args);
+
+// liberar o portao para outros avioes acloparem
+void desaclopar_aviao (aeroporto_t* aeroporto, aviao_t* aviao, size_t idPortao);
+
+size_t solicitarDecolagem(aeroporto_t* aeroporto, aviao_t* aviao);
+
+// desalocação de todos os elementos do aeroporto
 int finalizar_aeroporto (aeroporto_t* aeroporto);
 
 #endif

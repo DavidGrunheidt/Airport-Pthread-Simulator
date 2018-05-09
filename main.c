@@ -1,22 +1,19 @@
-
-
 #include "aeroporto.h"
 #include "fila.h"
 
 #define NOVO_AVIAO_MIN 30000 // 30 milisegundos
 #define NOVO_AVIAO_MAX 120000 // 120  milisegundos
-#define COMBUSTIVEL_MIN 5
-#define COMBUSTIVEL_MAX 65
-#define TEMPO_APROXIMACAO_AERO  500000 //  500  milisegundos
-#define TEMPO_POUSO_DECOLAGEM 40
-#define TEMPO_REMOVER_BAGAGENS 90
-#define TEMPO_INSERIR_BAGAGENS 110
-#define TEMPO_BAGAGENS_ESTEIRA 200
-#define TEMPO_SIMULACAO 10000 // 10 segundos
+#define COMBUSTIVEL_MIN 5 // 5%
+#define COMBUSTIVEL_MAX 65 // 65%
+#define TEMPO_APROXIMACAO_AERO  600000 //  600  milisegundos
+#define TEMPO_POUSO_DECOLAGEM 40000 // 40 milisegundos
+#define TEMPO_REMOVER_BAGAGENS 200000 // 200 milisegundos
+#define TEMPO_BAGAGENS_ESTEIRA 1000000 // 1 segundo
+#define TEMPO_INSERIR_BAGAGENS 300000 // 300 milisegundos 
+#define TEMPO_SIMULACAO 10000000 // 10 segundos
 
 void criarAviao(unsigned int seed, size_t idAviao, aeroporto_t *aero);
 void *simularAviao(void *arg);
-void pousar(aeroporto_t *meu_aeroporto, aviao_t *aviao, size_t idFilaDeAproximacao);
 
 typedef struct {
     aeroporto_t *aeroporto;
@@ -27,7 +24,7 @@ typedef struct {
 size_t t_novo_aviao_min, t_novo_aviao_max;
 size_t t_aproximacao_aero, t_pouso_decolagem;
 size_t t_remover_bagagens, t_inserir_bagagens;
-size_t t_bagagens_esteira, t_simulacao;
+size_t t_simulacao, t_bagagens_esteira;
 
 // Variáveis discretas (inicio n_)
 size_t n_pistas, n_portoes;
@@ -35,7 +32,7 @@ size_t n_max_avioes_esteira, n_esteiras;
 size_t n_args;
 
 // Variáveis de prioridade (inicio p_)
-size_t p_combustivel_min, p_combustivel_max;
+size_t p_combustivel_min, p_combustivel_max;    
 
 int main (int argc, char** argv) {
     if (argc == 5) { // Argumentos sem tempos de execução
@@ -44,8 +41,8 @@ int main (int argc, char** argv) {
         t_aproximacao_aero = TEMPO_APROXIMACAO_AERO;
         t_pouso_decolagem = TEMPO_POUSO_DECOLAGEM;
         t_remover_bagagens = TEMPO_REMOVER_BAGAGENS;
-        t_inserir_bagagens = TEMPO_INSERIR_BAGAGENS;
         t_bagagens_esteira = TEMPO_BAGAGENS_ESTEIRA;
+        t_inserir_bagagens = TEMPO_INSERIR_BAGAGENS;
         t_simulacao = TEMPO_SIMULACAO;
         p_combustivel_min = COMBUSTIVEL_MIN;
         p_combustivel_max = COMBUSTIVEL_MAX;
@@ -64,10 +61,10 @@ int main (int argc, char** argv) {
         t_pouso_decolagem = atoi(argv[++i]);
         n_pistas = atoi(argv[++i]);
         t_remover_bagagens = atoi(argv[++i]);
+        t_bagagens_esteira = atoi(argv[++i]);
         t_inserir_bagagens = atoi(argv[++i]);
         n_portoes = atoi(argv[++i]);
         n_max_avioes_esteira = atoi(argv[++i]);
-        t_bagagens_esteira = atoi(argv[++i]);
         n_esteiras = atoi(argv[++i]);
         t_simulacao = atoi(argv[++i]);
 
@@ -76,7 +73,7 @@ int main (int argc, char** argv) {
         printf("./aeroporto  NOVO_AVIAO_MIN  NOVO_AVIAO_MAX\n");
         printf("COMBUSTIVEL_MIN COMBUSTIVEL_MAX   TEMPO_APROXIMACAO_AERO\n");
         printf("TEMPO_POUSO_DECOLAGEM  NUMERO_PISTAS  TEMPO_REMOVER_BAGAGENS\n");
-        printf("TEMPO_INSERIR_BAGAGENS  NUMERO_PORTOES  MAXIMO_AVIOES_ESTEIRA\n");
+        printf("TEMPO_BAGAGENS_ESTEIRA TEMPO_INSERIR_BAGAGENS\nNUMERO_PORTOES  MAXIMO_AVIOES_ESTEIRA\n");
         printf("TEMPO_BAGAGENS_ESTEIRA  NUMERO_ESTEIRAS  TEMPO_SIMULACAO\n");
         printf("----------OU----------\n");
         printf("./airport  NUMERO_PISTAS  NUMERO_PORTOES  MAXIMO_AVIOES_ESTEIRA  NUMERO_ESTEIRAS\n");
@@ -84,23 +81,23 @@ int main (int argc, char** argv) {
     }
 
     // Impressão com os parâmetros selecionados para simulação
-    printf("Simulação iniciada com tempo total: %lu\n", t_simulacao);
-    printf("Tempo para criação de aviões: %lu - %lu\n", t_novo_aviao_min, t_novo_aviao_max);
+    printf("Simulação iniciada com tempo total: %lu milisegundos\n", t_simulacao/1000);
+    printf("Tempo para criação de aviões: %lu - %lu milisegundos\n", t_novo_aviao_min/1000, t_novo_aviao_max/1000);
     printf("Número de pistas de pouso: %lu\n", n_pistas);
-    printf("Tempo de pouso e decolagem: %lu\n", t_pouso_decolagem);
+    printf("Tempo de aproximacao do aeroporto = %lu milisegundos\n", t_aproximacao_aero/1000);
+    printf("Tempo de pouso e decolagem: %lu milisegundos\n", t_pouso_decolagem/1000);
     printf("Número de portões de embarque: %lu\n", n_portoes);
-    printf("Tempo de inserção (%lu) e remoção (%lu) de bagagens\n", t_inserir_bagagens, t_remover_bagagens);
+    printf("Tempo de inserção (%lu milisegundos) e remoção (%lu milisegundos) de bagagens\n", t_inserir_bagagens/1000, t_remover_bagagens/1000);
     printf("Número de esteiras: %lu, com %lu aviões por esteira\n", n_esteiras, n_max_avioes_esteira);
-    printf("Tempo das bagagens nas esteiras: %lu\n", t_bagagens_esteira);
 
     // Inicialização do aeroporto
-    size_t args[9] = {n_pistas, n_portoes, n_esteiras, n_max_avioes_esteira, t_aproximacao_aero, t_pouso_decolagem, t_remover_bagagens, t_inserir_bagagens, t_bagagens_esteira};
+    size_t args[9] = {n_pistas, n_portoes, n_esteiras, n_max_avioes_esteira, t_aproximacao_aero, t_pouso_decolagem, t_remover_bagagens, t_bagagens_esteira, t_inserir_bagagens};
 
     aeroporto_t* aero = iniciar_aeroporto(args);
 
     size_t contAvioes = 0;
     int wait;
-    int nAvioes = 100;
+    int nAvioes = 10;
     aviao_t **aviao = (aviao_t **) malloc (nAvioes * sizeof(aviao_t*));
 
     while (contAvioes < nAvioes) {
@@ -139,38 +136,32 @@ int main (int argc, char** argv) {
 }
 
 void *simularAviao(void *arg) {
-        // args em forma de vetor para porder liberar memoria
+    // args em forma de vetor para porder liberar memoria
     arg_t *args = ((arg_t *)arg);
-    aeroporto_t *meu_aeroporto =  args->aeroporto;
+    aeroporto_t *aeroporto =  args->aeroporto;
     aviao_t *aviao = args->aviao;
-        // Liberação de memoria de args
+    // Liberação de memoria de args
     free(args);
 
-    size_t idFilaDeAproximacao = aproximacao_aeroporto(meu_aeroporto, aviao);
-    pousar(meu_aeroporto, aviao, idFilaDeAproximacao);
-}
+    // Insere um aviao em uma fila de pouso de uma pista
+    size_t idPista = solicitarPista(aeroporto, aviao, 0);
+    
+    // Caso a verificação resulte true então ele realiza o pouso dentro desta
+    // Função, ou seja, pousar_aviao é chamado aqui dentro
+    usarPistaSePrimeiroDaFilaPista(aeroporto, aviao, idPista, 0);
 
-void pousar(aeroporto_t *meu_aeroporto, aviao_t *aviao, size_t idFilaDeAproximacao) {
-    while (1) {
-        // Aguarda uma pista das npistas livres
-        sem_wait(&meu_aeroporto->pistasLivres);
-        // Verifica se ele é o primeiro da fila
-        // Trava o acesso a fila para verificação e talvez utilização
-        // Obs: unica logica de lock e unlock fora da fila (Otimização)
-        pthread_mutex_lock(&meu_aeroporto->filasPousoDecolagem[idFilaDeAproximacao]->mutexFila);
-        if (meu_aeroporto->filasPousoDecolagem[idFilaDeAproximacao]->primeiro->dado->id == aviao->id) {
-            // Se for o primeiro então pousa o aviao
-            // Obs: mutex da fila é destravado dentro da func de remoção
-            // na logica da fila 
-            pousar_aviao(meu_aeroporto, aviao->id, idFilaDeAproximacao);
-            break;
-        } else {
-            // Se não for o primeiro então precisa destravar o mutex já que
-            // a parte de destravamento que esta dentro da func de remoção do
-            // aviao da fila de aproximação (remover) não acontecerá.
-            pthread_mutex_unlock(&meu_aeroporto->filasPousoDecolagem[idFilaDeAproximacao]->mutexFila);
-            sem_post(&meu_aeroporto->pistasLivres);
-        }
-    }
+    size_t idPortao = solicitarAcoplagem(aeroporto, aviao);
+
+    acoplarSePrimeiroDafilaDeAcoplagem(aeroporto, aviao, idPortao);
+
+    abastecerAviao(aviao);
+
+    transportar_bagagens(aeroporto, aviao, idPortao);
+
+    desaclopar_aviao(aeroporto, aviao, idPortao);
+
+    idPista = solicitarPista(aeroporto, aviao, 1);
+
+    usarPistaSePrimeiroDaFilaPista(aeroporto, aviao, idPista, 1);
 }
 

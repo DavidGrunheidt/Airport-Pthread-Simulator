@@ -15,6 +15,10 @@ aviao_t * criar_aviao(size_t id, size_t combustivel) {
 	return aviao;
 }
 
+void abastecerAviao(aviao_t *aviao) {
+	aviao->combustivel = 100;
+}
+
 void desaloca_aviao(aviao_t* aviao) {
 	free(aviao);
 }

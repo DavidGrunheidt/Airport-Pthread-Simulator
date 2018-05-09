@@ -11,6 +11,8 @@ typedef struct {
   size_t id; // Identificador do avião
 } aviao_t;
 
+void abastecerAviao(aviao_t *aviao);
+
 // Alocação e desalocação dinamica na memoria.
 aviao_t * criar_aviao (size_t id, size_t combustivel);
 void desaloca_aviao (aviao_t* aviao);
