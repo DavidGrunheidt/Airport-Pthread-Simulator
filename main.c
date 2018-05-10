@@ -8,9 +8,9 @@
 #define TEMPO_APROXIMACAO_AERO  600000 //  600  milisegundos
 #define TEMPO_POUSO_DECOLAGEM 40000 // 40 milisegundos
 #define TEMPO_REMOVER_BAGAGENS 200000 // 200 milisegundos
-#define TEMPO_BAGAGENS_ESTEIRA 1000000 // 1 segundo
+#define TEMPO_BAGAGENS_ESTEIRA 400000 // 1 segundo
 #define TEMPO_INSERIR_BAGAGENS 300000 // 300 milisegundos 
-#define TEMPO_SIMULACAO 10000000 // 10 segundos
+#define TEMPO_SIMULACAO 10 // 10 segundos
 
 void criarAviao(unsigned int seed, size_t idAviao, aeroporto_t *aero);
 void *simularAviao(void *arg);
@@ -32,9 +32,13 @@ size_t n_max_avioes_esteira, n_esteiras;
 size_t n_args;
 
 // Variáveis de prioridade (inicio p_)
-size_t p_combustivel_min, p_combustivel_max;    
+size_t p_combustivel_min, p_combustivel_max;
+
+clock_t t0, tf;    
 
 int main (int argc, char** argv) {
+    t0 = clock();
+
     if (argc == 5) { // Argumentos sem tempos de execução
         t_novo_aviao_min = NOVO_AVIAO_MIN;
         t_novo_aviao_max = NOVO_AVIAO_MAX;
@@ -97,10 +101,10 @@ int main (int argc, char** argv) {
 
     size_t contAvioes = 0;
     int wait;
-    int nAvioes = 10;
-    aviao_t **aviao = (aviao_t **) malloc (nAvioes * sizeof(aviao_t*));
+    aviao_t **aviao = (aviao_t **) malloc (100 * sizeof(aviao_t*));
 
-    while (contAvioes < nAvioes) {
+
+    while ((double) ((tf - t0)/CLOCKS_PER_SEC) < t_simulacao) {
         // Define uma porcentagem de combustivel de 5 a 80%
         size_t combustivel = p_combustivel_min + rand() % (p_combustivel_max - p_combustivel_min);
 
@@ -122,9 +126,10 @@ int main (int argc, char** argv) {
         // Esperar um tempo para criar outro aviao
         usleep(wait);
         contAvioes++;
+        tf = clock();
     }  
 
-    for (int i = 0; i < nAvioes; i++) {
+    for (int i = 0; i < contAvioes; i++) {
         pthread_join(aviao[i]->thread, NULL);
         desaloca_aviao(aviao[i]);
     }

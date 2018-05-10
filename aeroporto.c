@@ -11,6 +11,7 @@ aeroporto_t* iniciar_aeroporto (size_t *args) {
 
 	int npistas = *(args), nportoes = *(args+1), nesteiras = *(args+2), n_max_avioes_esteira = *(args+3);
 	
+	aeroporto->cont = 0;
 	aeroporto->n_pistas = npistas;
 	aeroporto->n_portoes = nportoes;
 	aeroporto->n_esteiras = nesteiras;
@@ -80,7 +81,9 @@ size_t solicitarPista (aeroporto_t* aeroporto, aviao_t* aviao, size_t pousoOuDec
 	}
 
 	// Tempo desde a requisição até ele chegar no aeroporto
-	usleep(aeroporto->t_aproximacao_aero);
+	// só em caso de pouso
+	if (pousoOuDecolagem == 0)
+		usleep(aeroporto->t_aproximacao_aero);
 
 	return filaInserido;
 }
@@ -184,11 +187,16 @@ void usarPistaSePrimeiroDaFilaPista(aeroporto_t *aeroporto, aviao_t *aviao, size
 
 void usarPista (aeroporto_t* aeroporto, size_t idAviao, size_t idPista, size_t pousoOuDecolagem) {
 	pthread_mutex_lock((aeroporto->pistas + idPista));
+	if (aeroporto->filasPousoDecolagem[idPista]->n_elementos - 1 == 0) 
+		aeroporto->cont++;
+
 	// Aviao usou a pista IdFilaDeAproximacao p/ pouso ou decolagem
 	usleep(aeroporto->t_pouso_decolagem);
 	remover(aeroporto->filasPousoDecolagem[idPista]);
 	// Aguarda o tempo de pouso antes de liberar a pista
 	pthread_mutex_unlock((aeroporto->pistas + idPista));
+
+	
 
 	if (pousoOuDecolagem == 0) {
 		printf("Avião (%lu) pousou na pista %lu\n", idAviao, idPista);
@@ -277,6 +285,7 @@ void transportar_bagagens (aeroporto_t* aeroporto, aviao_t* aviao, size_t idPort
 	pthread_t bagagensEsteira;
 	pthread_create(&bagagensEsteira, NULL, simularBagagensEsteira, (void *) args);
 	//pthread_detach(bagagensEsteira);
+	pthread_detach(bagagensEsteira);
 
 	// Aguarda o tempo de inserir as bagagens no aviao
 	usleep(aeroporto->t_inserir_bagagens);

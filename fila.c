@@ -89,7 +89,7 @@ size_t inserirUltimo(fila_ordenada_t *fila, aviao_t *dado, int lock) {
 	return index;
 }
 
-void remover (fila_ordenada_t * fila) {
+aviao_t* remover (fila_ordenada_t * fila) {
 	// Não é necessario dar lock no mutex, já é feito no main
 	elemento_t *elementoRemovido = fila->primeiro;
 	fila->primeiro = fila->primeiro->proximo;

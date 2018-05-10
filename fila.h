@@ -48,6 +48,6 @@ void inserirPrimeiro(fila_ordenada_t *fila, elemento_t *elemento);
 size_t inserirUltimo(fila_ordenada_t *fila, aviao_t *dado, int lock);
 
 // Remove o primeiro elemento da fila)
-void remover (fila_ordenada_t * fila);
+aviao_t* remover (fila_ordenada_t * fila);
 
 #endif

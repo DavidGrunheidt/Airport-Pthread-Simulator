@@ -20,6 +20,7 @@ typedef struct {
 	size_t n_portoes;
 	size_t n_esteiras;
 	size_t n_max_avioes_esteira;
+	size_t cont;
 	tempo_t t_pouso_decolagem;
 	tempo_t t_remover_bagagens;
 	tempo_t t_bagagens_esteira;
