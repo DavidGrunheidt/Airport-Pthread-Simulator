@@ -99,10 +99,10 @@ int main (int argc, char** argv) {
 
     aeroporto_t* aero = iniciar_aeroporto(args);
 
+    size_t nAvioesMax = (t_simulacao * 1000000) / (t_novo_aviao_min);
     size_t contAvioes = 0;
     int wait;
-    aviao_t **aviao = (aviao_t **) malloc (100 * sizeof(aviao_t*));
-
+    aviao_t **aviao = (aviao_t **) malloc (nAvioesMax * sizeof(aviao_t*));
 
     while ((double) ((tf - t0)/CLOCKS_PER_SEC) < t_simulacao) {
         // Define uma porcentagem de combustivel de 5 a 80%
